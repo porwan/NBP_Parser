@@ -1,29 +1,36 @@
 package pl.parser.nbp;
 
+import org.joda.time.LocalDate;
+import pl.parser.nbp.exception.DateIsAfterToday;
+import pl.parser.nbp.exception.DateYearIsNotValid;
 import pl.parser.nbp.exception.EndDateAfterStartDateException;
-import pl.parser.nbp.model.ExchangeRateTable;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.text.SimpleDateFormat;
 
 public class MainClass {
 
-    private static Map<String, String> NBP_DATA_URL_DATE_HASH_MAP = new TreeMap<>();
-    private static List<ExchangeRateTable> RATES = new ArrayList<>();
-    private static List<Double> SELLING_RATE = new ArrayList<>();
-    private static List<Double> BUYING_RATE = new ArrayList<>();
-    private static final int THREADS_NUMBER = 600;
-
-    public static void main(String... args) throws ParseException, EndDateAfterStartDateException {
+    public static void main(String... args) throws ParseException, EndDateAfterStartDateException, DateYearIsNotValid, DateIsAfterToday {
+        String inputDateFormat = "yyyy-MM-dd";
+        SimpleDateFormat dateFormat = new SimpleDateFormat(inputDateFormat);
+        LocalDate startDate = new LocalDate(dateFormat.parse(args[1]).getTime());
+        LocalDate endDate = new LocalDate(dateFormat.parse(args[2]).getTime());
+        checkIfDatesAreCorrect(startDate, endDate);
         NBPParser parser = new NBPParser();
-        String[] enterValues = {"EUR", "2013-01-28", "2013-01-31"};
-
-        parser.handleInputData(enterValues[1], enterValues[2], enterValues[0]);
+        parser.handleInputData(startDate, endDate, args[0]);
     }
 
+    private static void checkIfDatesAreCorrect(LocalDate startDate, LocalDate endDate) throws DateYearIsNotValid, DateIsAfterToday, EndDateAfterStartDateException {
+        if (startDate.getYear() < 2002) {
+            throw new DateYearIsNotValid();
+        }
+        if (endDate.isAfter(LocalDate.now())) {
+            throw new DateIsAfterToday();
+        }
+        if (startDate.isAfter(endDate)) {
+            throw new EndDateAfterStartDateException();
+        }
+    }
 
 }
 

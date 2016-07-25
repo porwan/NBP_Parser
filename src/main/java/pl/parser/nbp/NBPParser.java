@@ -2,7 +2,6 @@ package pl.parser.nbp;
 
 import org.apache.commons.io.IOUtils;
 import org.joda.time.LocalDate;
-import pl.parser.nbp.exception.EndDateAfterStartDateException;
 import pl.parser.nbp.model.ExchangeRateTable;
 import pl.parser.nbp.model.Position;
 import pl.parser.nbp.thread.TableCourse;
@@ -28,27 +27,18 @@ class NBPParser {
     private List<Double> SELLING_RATE = new ArrayList<>();
     private List<Double> BUYING_RATE = new ArrayList<>();
 
-    void handleInputData(String firstDate, String secondDate, String currencyCode) throws ParseException, EndDateAfterStartDateException {
-        String inputDateFormat = "yyyy-MM-dd";
-        SimpleDateFormat dateFormat = new SimpleDateFormat(inputDateFormat);
-        LocalDate startDate = new LocalDate(dateFormat.parse(firstDate).getTime());
-        LocalDate endDate = new LocalDate(dateFormat.parse(secondDate).getTime());
+    void handleInputData(LocalDate startDate, LocalDate endDate, String currencyCode) throws ParseException {
         List<Date> days;
         List<String> nbpDateUrlList;
-        if (startDate.isBefore(endDate)) {
-            days = DateUtils.getAllDaysBetweenTwoDates(startDate, endDate);
-            List<String> years = DateUtils.getAllYearsFromTwoDates(startDate, endDate);
-            nbpDateUrlList = DateUtils.getListWithURLsForProvidedYears(years);
-        } else {
-            throw new EndDateAfterStartDateException();
-        }
+        days = DateUtils.getAllDaysBetweenTwoDates(startDate, endDate);
+        List<String> years = DateUtils.getAllYearsFromTwoDates(startDate, endDate);
+        nbpDateUrlList = DateUtils.getListWithURLsForProvidedYears(years);
         nbpDateUrlList.forEach(this::fillMapWithUrlDateAndHashForYear);
         setUpExchangeRateForDays(days);
         fillSellingAndBuyingRateLists(currencyCode);
         System.out.println(Math.round(CountUtils.countMeanFromListWithDouble(BUYING_RATE) * 10000d) / 10000d);
         System.out.println(Math.round(CountUtils.countStandardDeviation(SELLING_RATE) * 10000d) / 10000d);
     }
-
 
     /**
      * Create date format needed to get Exchange Rate objects from NBP .xml files.
